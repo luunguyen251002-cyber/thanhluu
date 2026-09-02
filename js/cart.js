@@ -1,5 +1,5 @@
 // Quản lý giỏ hàng bằng localStorage, dùng chung cho mọi trang
-const CART_KEY = "shopviet_cart";
+const CART_KEY = "manly_cart";
 
 function getCart() {
   try {

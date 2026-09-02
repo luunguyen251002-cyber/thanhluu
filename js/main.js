@@ -1,70 +1,63 @@
-// Logic cho trang chủ: render danh mục, flash sale, lưới sản phẩm, bộ lọc, tìm kiếm
+// Logic cho trang chủ: render danh mục, lưới sản phẩm, lọc theo danh mục và tìm kiếm
 let currentCategory = "all";
 let searchTerm = "";
 
-function renderCategoryNav() {
-  const nav = document.getElementById("categoryNav");
-  if (!nav) return;
-  nav.innerHTML = CATEGORIES.filter((c) => c.id !== "all")
-    .map((c) => `<a href="#" data-cat="${c.id}">${c.name}</a>`)
-    .join("");
-  nav.querySelectorAll("a").forEach((a) => {
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      currentCategory = a.dataset.cat;
-      document.getElementById(`tab-${currentCategory}`)?.scrollIntoView();
-      setActiveTab(currentCategory);
-      renderProductGrid();
-      document.getElementById("productGrid").scrollIntoView({ behavior: "smooth" });
-    });
-  });
-}
-
-function renderFilterTabs() {
-  const wrap = document.getElementById("filterTabs");
-  if (!wrap) return;
-  wrap.innerHTML = CATEGORIES.map(
-    (c) => `<button id="tab-${c.id}" data-cat="${c.id}" class="${c.id === currentCategory ? "active" : ""}">${c.name}</button>`
+function renderCatsRow() {
+  const row = document.getElementById("catsRow");
+  if (!row) return;
+  row.innerHTML = CATEGORIES.map(
+    (c) => `<button data-cat="${c.id}" class="${c.id === currentCategory ? "active" : ""}">${c.name}</button>`
   ).join("");
-  wrap.querySelectorAll("button").forEach((btn) => {
+  row.querySelectorAll("button").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentCategory = btn.dataset.cat;
-      setActiveTab(currentCategory);
+      renderCatsRow();
       renderProductGrid();
+      document.getElementById("products").scrollIntoView({ behavior: "smooth" });
     });
   });
 }
 
-function setActiveTab(catId) {
-  document.querySelectorAll(".filter-tabs button").forEach((b) => {
-    b.classList.toggle("active", b.dataset.cat === catId);
-  });
-}
-
-function productCardHtml(p) {
+function cardHtml(p) {
+  const cat = getCategoryById(p.category);
   const discount = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
   return `
-  <div class="product-card">
+  <div class="card">
     <a href="product.html?id=${p.id}">
-      <div class="product-thumb" style="background:${p.color}">
-        ${p.icon}
-        ${discount > 0 ? `<span class="discount-badge">-${discount}%</span>` : ""}
+      <div class="card-media">
+        ${discount > 0 ? `<span class="tag">-${discount}%</span>` : ""}
+        ${iconSvg(cat.icon, 56)}
       </div>
     </a>
-    <div class="product-info">
-      <a href="product.html?id=${p.id}"><div class="product-name">${p.name}</div></a>
-      <div>
-        <span class="product-price">${formatPrice(p.price)}</span>
-        ${p.oldPrice ? `<span class="product-old-price">${formatPrice(p.oldPrice)}</span>` : ""}
+    <div class="card-body">
+      <span class="card-cat">${cat.name}</span>
+      <a href="product.html?id=${p.id}"><div class="card-name">${p.name}</div></a>
+      <div class="price-row">
+        <span class="price">${formatPrice(p.price)}</span>
+        ${p.oldPrice ? `<span class="price-old">${formatPrice(p.oldPrice)}</span>` : ""}
       </div>
-      <div class="product-meta"><span>⭐ ${p.rating}</span><span>Đã bán ${p.sold}</span></div>
-      <button class="add-cart-btn" data-id="${p.id}">Thêm vào giỏ</button>
+      <div class="meta-row"><span>★ ${p.rating}</span><span>Đã bán ${p.sold}</span></div>
+      <button class="add-btn" data-add="${p.id}">+ Thêm vào giỏ</button>
     </div>
   </div>`;
 }
 
+function bindAddButtons(scope) {
+  scope.querySelectorAll("[data-add]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      addToCart(Number(btn.dataset.add), 1);
+      const original = btn.textContent;
+      btn.textContent = "Đã thêm ✓";
+      setTimeout(() => (btn.textContent = original), 1100);
+    });
+  });
+}
+
 function renderProductGrid() {
   const grid = document.getElementById("productGrid");
+  const head = document.getElementById("gridTitle");
+  const count = document.getElementById("gridCount");
   if (!grid) return;
   let list = PRODUCTS;
   if (currentCategory !== "all") list = list.filter((p) => p.category === currentCategory);
@@ -72,65 +65,34 @@ function renderProductGrid() {
     const s = searchTerm.toLowerCase();
     list = list.filter((p) => p.name.toLowerCase().includes(s));
   }
-  grid.innerHTML = list.length
-    ? list.map(productCardHtml).join("")
-    : `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><p>Không tìm thấy sản phẩm phù hợp.</p></div>`;
-  bindAddToCartButtons(grid);
-}
-
-function renderFlashSale() {
-  const wrap = document.getElementById("flashScroll");
-  if (!wrap) return;
-  const flash = PRODUCTS.filter((p) => p.oldPrice).slice(0, 8);
-  wrap.innerHTML = flash.map(productCardHtml).join("");
-  bindAddToCartButtons(wrap);
-}
-
-function bindAddToCartButtons(scope) {
-  scope.querySelectorAll(".add-cart-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      addToCart(Number(btn.dataset.id), 1);
-      btn.textContent = "Đã thêm ✓";
-      setTimeout(() => (btn.textContent = "Thêm vào giỏ"), 1200);
-    });
-  });
-}
-
-function startCountdown() {
-  const el = document.getElementById("countdown");
-  if (!el) return;
-  let end = Date.now() + 1000 * 60 * 60 * 3; // đếm ngược 3 tiếng
-  function tick() {
-    let diff = Math.max(0, end - Date.now());
-    const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
-    const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
-    const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
-    el.innerHTML = `<b>${h}</b>:<b>${m}</b>:<b>${s}</b>`;
-    if (diff <= 0) end = Date.now() + 1000 * 60 * 60 * 3;
+  if (head) {
+    const catName = currentCategory === "all" ? "Toàn bộ sản phẩm" : getCategoryById(currentCategory).name;
+    head.textContent = searchTerm ? `${catName} — tìm "${searchTerm}"` : catName;
   }
-  tick();
-  setInterval(tick, 1000);
+  if (count) count.textContent = `${list.length} sản phẩm`;
+  grid.innerHTML = list.length
+    ? list.map(cardHtml).join("")
+    : `<div class="empty" style="grid-column:1/-1">${iconSvg("search", 44)}<p>Không tìm thấy sản phẩm phù hợp.</p></div>`;
+  bindAddButtons(grid);
 }
 
 function bindSearch() {
-  const form = document.getElementById("searchForm");
-  if (!form) return;
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    searchTerm = document.getElementById("searchInput").value.trim();
-    currentCategory = "all";
-    setActiveTab("all");
+  const input = document.getElementById("searchInput");
+  if (!input) return;
+  input.addEventListener("input", (e) => {
+    searchTerm = e.target.value.trim();
     renderProductGrid();
-    document.getElementById("productGrid").scrollIntoView({ behavior: "smooth" });
   });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  renderCategoryNav();
-  renderFilterTabs();
+  renderCatsRow();
   renderProductGrid();
-  renderFlashSale();
-  startCountdown();
   bindSearch();
+  document.getElementById("heroWatchBtn")?.addEventListener("click", () => {
+    currentCategory = "dong-ho-nam";
+    renderCatsRow();
+    renderProductGrid();
+    document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+  });
 });
