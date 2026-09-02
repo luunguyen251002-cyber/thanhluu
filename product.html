@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi tiết sản phẩm - ShopViệt</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="container">
+    <div class="top-bar-links"><span>📞 Hotline: 1900 1234</span></div>
+    <div class="top-bar-links"><a href="#">Trợ giúp</a></div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="container header-inner">
+    <a class="logo" href="index.html">Shop<span>Việt</span></a>
+    <form class="search-box" action="index.html">
+      <input type="text" name="q" placeholder="Tìm kiếm sản phẩm bạn mong muốn...">
+      <button type="submit">🔍</button>
+    </form>
+    <div class="header-actions">
+      <a href="cart.html" class="cart-link">🛒<span class="cart-count" id="cartCount">0</span></a>
+    </div>
+  </div>
+  <nav class="nav"><div class="container nav-inner" id="categoryNavStatic">
+    <a href="index.html">← Về trang chủ</a>
+  </div></nav>
+</header>
+
+<div class="container" style="padding-top:20px">
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <div id="productDetailWrap"></div>
+  <h2 class="related-title">Sản phẩm liên quan</h2>
+  <div class="product-grid" id="relatedGrid"></div>
+</div>
+
+<footer class="footer" style="margin-top:32px">
+  <div class="container footer-bottom">© 2026 ShopViệt. Bảo lưu mọi quyền.</div>
+</footer>
+
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/product.js"></script>
+</body>
+</html>
